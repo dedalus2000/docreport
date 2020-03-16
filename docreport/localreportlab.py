@@ -2,8 +2,8 @@
 
 from reportlab.pdfgen.canvas import Canvas as _Canvas
 from reportlab.platypus import Paragraph, Frame
-from pagedata import page_ylen, A4
-from filters import Filter, Tag, T
+from .pagedata import page_ylen, A4
+from .filters import Filter, Tag, T
 
 
 class MyFrame(Frame):

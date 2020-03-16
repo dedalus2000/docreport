@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from localreportlab import MyParagraph
-from pagedata import styleN, mm
+from .localreportlab import MyParagraph
+from .pagedata import styleN, mm
 
 
 class WrappableInterface(object):
