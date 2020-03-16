@@ -56,8 +56,23 @@ class Wrappable(WrappableInterface):
         self.width += 2*self.x_padding  # la larghezza minima è 1+2*x_padding
         self.height += 2*self.y_padding
         self._pheight = self.height
+        self.border_cb = border_cb
         if min_height and self.height<min_height:
             self.height = min_height
+
+    def vAdd(self, wrappable, *args, **kwargs):
+        assert isinstance(wrappable, WrappableInterface)
+        hh = VerticalWrappable(*args, **kwargs)
+        hh.add(self)
+        hh.add(wrappable)
+        return hh
+
+    def hAdd(self, wrappable, *args, **kwargs):
+        assert isinstance(wrappable, WrappableInterface)
+        hh = HorizzontalWrappable(*args, **kwargs)
+        hh.add(self)
+        hh.add(wrappable)
+        return hh
 
     def drawOn(self, canvas, x, y):
         # ci sommo height perché scrive all'insu'..
@@ -65,29 +80,15 @@ class Wrappable(WrappableInterface):
         if self.border_cb:
             self.border_cb(canvas, x,y, self)
 
-    def vAdd(self, wrappable):
-        assert isinstance(wrappable, WrappableInterface)
-        hh = VerticalWrappable()
-        hh.add(self)
-        hh.add(wrappable)
-        return hh
-
-    def hAdd(self, wrappable):
-        assert isinstance(wrappable, WrappableInterface)
-        hh = HorizzontalWrappable()
-        hh.add(self)
-        hh.add(wrappable)
-        return hh
-
 
 class HorizzontalWrappable(WrappableInterface):
     wrappables = None
     height = None
     width = None
-    border = None
+    border_cb = None
 
-    def __init__(self, border=None):
-        self.border = border
+    def __init__(self, border_cb=None):
+        self.border_cb = border_cb
         self.wrappables = []
         self.height = 0
         self.width = 0
@@ -95,20 +96,18 @@ class HorizzontalWrappable(WrappableInterface):
     def __len__(self):
         return len(self.wrappables or [])
 
-    def hAdd(self, wrappable, border=None):
+    def hAdd(self, wrappable):
         assert isinstance(wrappable, WrappableInterface)
         self.wrappables.append(wrappable)
 
         self.height = max(self.height, wrappable.height)
         self.width += wrappable.width
-        if border is not None:
-            wrappable.border = border
         return self
     add = hAdd
 
-    def vAdd(self, wrappable):
+    def vAdd(self, wrappable, *args, **kwargs):
         assert isinstance(wrappable, WrappableInterface)
-        hh = VerticalWrappable()
+        hh = VerticalWrappable(*args, **kwargs)
         hh.add(self)
         hh.add(wrappable)
         return hh
@@ -118,19 +117,19 @@ class HorizzontalWrappable(WrappableInterface):
         for obj in self.wrappables:
             obj.drawOn(canvas, curx, y)
             curx += obj.width
-           
-        if self.border:
-            canvas.rect(x,y, self.width,self.height)
+
+        if self.border_cb:
+            self.border_cb(canvas, x,y, self)
 
 
 class VerticalWrappable(WrappableInterface):
     wrappables = None
     height = None
     width = None
-    border = None
+    border_cb = None
 
-    def __init__(self, border=None):
-        self.border = border
+    def __init__(self, border_cb=None):
+        self.border_cb = border_cb
         self.wrappables = []
         self.height = 0
         self.width = 0
@@ -162,5 +161,5 @@ class VerticalWrappable(WrappableInterface):
             obj.drawOn(canvas, x, cury)
             cury += obj.height
            
-        if self.border:
-            canvas.rect(x,y, self.width,self.height)
+        if self.border_cb:
+            self.border_cb(canvas, x,y, self)

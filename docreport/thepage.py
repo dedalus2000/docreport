@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from wrapobjs import WrappableInterface, HorizzontalWrappable, Wrappable, VerticalWrappable
-from localreportlab import MyCanvas
-from pagedata import mm
+from .wrapobjs import WrappableInterface, HorizzontalWrappable, Wrappable, VerticalWrappable
+from .localreportlab import MyCanvas
+from .pagedata import mm
 
 
 class RowsUtil(VerticalWrappable):
+    # a VertivalWrap. filled with Horiz.Wrap.
+    #
     max_height = 0
     cols_widths = None
     escape = None
