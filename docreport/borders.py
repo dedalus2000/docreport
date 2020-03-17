@@ -1,5 +1,5 @@
 
-def all_borders(canvas, x,y, obj):
+def borderbox(canvas, x,y, obj):
     canvas.rect(x,y, obj.width,obj.height)
 
 

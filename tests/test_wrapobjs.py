@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from docreport.wrapobjs import Wrappable, HorizzontalWrappable, VerticalWrappable
 from docreport.localreportlab import MyParagraph
 from docreport.pagedata import styleN, mm
 from docreport.filters import Filter
-from docreport.wrapobjs import Wrappable, HorizzontalWrappable, VerticalWrappable
-from docreport.localreportlab import MyCanvas
 from docreport.filters import T
+from docreport import borders
 from utils import pdfFileCanvas
+from docreport.borders import hborders, vborders
 
 
 def _test_page(c):
@@ -45,8 +46,8 @@ def _test_page(c):
             min_height=50, escape=TmpFilter())
 
     ###########
-    h1 = HorizzontalWrappable(border=True)
-    h1.add(w1, border=True)
+    h1 = HorizzontalWrappable()
+    h1.add(w1)
     h1.add(w2)
     h1.add(w3)
     h1.drawOn(c, 30*mm, 120*mm)
@@ -68,7 +69,7 @@ def _test_page(c):
     _extern_lines(30*mm+pre,120*mm, w, h)
 
     c.showPage()  ######################################
-    v1 = VerticalWrappable(border=True)
+    v1 = VerticalWrappable()
     v1.add(w1)
     v1.add(w2)
     v1.add(w3)
@@ -93,6 +94,21 @@ def _test_page(c):
             vAdd(Wrappable(["Tag wrap: ", T.b['example']], 120*mm))
             
     ww1.drawOn(c, 20*mm, 30*mm + ww.height*mm)
+
+    c.showPage()  ######################################
+    Wrappable("Borders", 130*mm, border_cb=borders.borderbox).drawOn(c, 20*mm, 20*mm )
+
+    HorizzontalWrappable(border_cb=hborders).\
+        add(Wrappable("Col1", 15*mm)).\
+        add(Wrappable("Col2", 15*mm)).\
+        add(Wrappable("Col3", 15*mm)).\
+            drawOn(c, 20*mm, 40*mm)
+
+    VerticalWrappable(border_cb=vborders).\
+        add(Wrappable("row1", 15*mm)).\
+        add(Wrappable("row2", 15*mm)).\
+        add(Wrappable("row3", 15*mm)).\
+            drawOn(c, 20*mm, 60*mm)
 
 
 if __name__=='__main__':
