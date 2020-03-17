@@ -36,6 +36,9 @@ class MyCanvas(_Canvas):
     def line(self, x1,y1, x2,y2, unit=1):
         _Canvas.line(self, unit*x1, page_ylen-unit*y1, unit*x2, page_ylen-unit*y2)
 
+    def roundRect(self, x, y, width, height, radius, stroke=1, fill=0):
+        _Canvas.roundRect(self, x, page_ylen-y-height, width, height, radius, stroke, fill)
+
     def rect(self, xx, yy, xlen, ylen, unit=1, **kwargs):
         # stroke=0, fill=1)
         # print xx/mm,yy/mm

@@ -2,3 +2,6 @@ i bordi!!
 gestione del locale
 cosa faccio quando una riga è più alta dell'area disponibile per le righe?
 markupsafe può essere utilitizzato più pervasivamente
+permettere l'utilizzo di altre pagine (ora solo A4)
+togliere "unit" dagli argomenti
+MyXX => XX

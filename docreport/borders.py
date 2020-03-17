@@ -2,6 +2,10 @@
 def borderbox(canvas, x,y, obj):
     canvas.rect(x,y, obj.width,obj.height)
 
+def getRborderbox(radius):
+    def rborderbox(canvas, x,y, obj):
+        canvas.roundRect(x,y, obj.width,obj.height, radius)
+    return rborderbox
 
 def hborders(canvas, x,y, hobj):
     canvas.line(x,y, x,y+hobj.height)
