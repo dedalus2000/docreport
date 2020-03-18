@@ -9,6 +9,7 @@ class WrappableInterface(object):
     height = None
     width = None
     _last = (None, None, None)  # canvas,x,y
+    _wattached = None  # []
 
     def drawOn(self, canvas, x, y):
         raise Exception('Not defined')
@@ -25,9 +26,15 @@ class WrappableInterface(object):
     def add(self, wrappable):
         raise Exception('Not defined')
         #return self
+    
+    def _call_wattachments(self):
+        if self._wattached:
+            for (obj, dx,dy) in self._wattached:
+                obj.drawOn(self, dx, dy)
 
     def __str__(self):
-        return "<Wrappable {}x{} >".format(
+        return "<{} {}x{} >".format(
+                getattr(self, 'name', self.__class__.__name__),
                 None if self.width is None else self.width/mm ,
                 None if self.height is None else  self.height/mm
             )
@@ -47,6 +54,7 @@ class Wrappable(WrappableInterface):
     width = None
 
     def __init__(self, txt, width, height=None, min_height=None, style=None, escape=None, border_cb=None):
+        self._wattached = []
         self.width = width
         
         self.pb = MyParagraph(txt, style or self.style, escape=escape)
@@ -82,9 +90,12 @@ class Wrappable(WrappableInterface):
         """
         if isinstance(obj, WrappableInterface):
             canvas, ox, oy = obj._last
+            x = (x or 0)
+            y = (y or 0)
             if canvas is None:
-                raise Exception("Source object %s has not been drawed")
-            self.drawOn(canvas, ox + (x or 0), oy + (y or 0))
+                obj._wattached.append( (self, x, y) )
+            else:
+                self.drawOn(canvas, ox+x, oy+y  )
         else:
             canvas = obj
             if x is None or y is None:
@@ -94,6 +105,8 @@ class Wrappable(WrappableInterface):
             self.pb.drawOn(canvas, x+self.x_padding, y+self._pheight -self.y_padding)
             if self.border_cb:
                 self.border_cb(canvas, x,y, self)
+            
+            self._call_wattachments()
 
 
 class HorizzontalWrappable(WrappableInterface):
@@ -103,6 +116,7 @@ class HorizzontalWrappable(WrappableInterface):
     border_cb = None
 
     def __init__(self, border_cb=None):
+        self._wattached = []
         self.border_cb = border_cb
         self.wrappables = []
         self.height = 0
@@ -134,9 +148,12 @@ class HorizzontalWrappable(WrappableInterface):
         """
         if isinstance(obj, WrappableInterface):
             canvas, ox, oy = obj._last
+            x = (x or 0)
+            y = (y or 0)
             if canvas is None:
-                raise Exception("Source object %s has not been drawed")
-            self.drawOn(canvas, ox + (x or 0), oy + (y or 0))
+                obj._wattached.append( (self, x, y) )
+            else:
+                self.drawOn(canvas, ox+x, oy+y)
         else:
             canvas = obj
             if x is None or y is None:
@@ -151,6 +168,8 @@ class HorizzontalWrappable(WrappableInterface):
             if self.border_cb:
                 self.border_cb(canvas, x,y, self)
 
+            self._call_wattachments()
+
 
 class VerticalWrappable(WrappableInterface):
     wrappables = None
@@ -159,6 +178,7 @@ class VerticalWrappable(WrappableInterface):
     border_cb = None
 
     def __init__(self, border_cb=None):
+        self._wattached = []
         self.border_cb = border_cb
         self.wrappables = []
         self.height = 0
@@ -192,9 +212,12 @@ class VerticalWrappable(WrappableInterface):
         """
         if isinstance(obj, WrappableInterface):
             canvas, ox, oy = obj._last
+            x = (x or 0)
+            y = (y or 0)
             if canvas is None:
-                raise Exception("Source object %s has not been drawed")
-            self.drawOn(canvas, ox + (x or 0), oy + (y or 0))
+                obj._wattached.append( (self, x, y) )
+            else:
+                self.drawOn(canvas, ox+x, oy+y)
         else:
             canvas = obj
             if x is None or y is None:
@@ -208,3 +231,5 @@ class VerticalWrappable(WrappableInterface):
             
             if self.border_cb:
                 self.border_cb(canvas, x,y, self)
+            
+            self._call_wattachments()
