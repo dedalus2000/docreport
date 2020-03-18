@@ -8,6 +8,7 @@ class WrappableInterface(object):
     border = None
     height = None
     width = None
+    _last = (None, None, None)  # canvas,x,y
 
     def drawOn(self, canvas, x, y):
         raise Exception('Not defined')
@@ -75,11 +76,17 @@ class Wrappable(WrappableInterface):
         return hh
 
     def drawOn(self, canvas, x, y):
+        self._last = canvas, x, y
         # ci sommo height perché scrive all'insu'..
         self.pb.drawOn(canvas, x+self.x_padding, y+self._pheight -self.y_padding)
         if self.border_cb:
             self.border_cb(canvas, x,y, self)
 
+    def drawAttached(self, ww, dx=0, dy=0):
+        canvas, x, y = ww._last
+        x += dx
+        y += dy
+        self.drawOn(canvas, x, y)
 
 class HorizzontalWrappable(WrappableInterface):
     wrappables = None
@@ -113,6 +120,7 @@ class HorizzontalWrappable(WrappableInterface):
         return hh
 
     def drawOn(self, canvas, x, y):
+        self._last = canvas, x, y
         curx = x
         for obj in self.wrappables:
             obj.drawOn(canvas, curx, y)
@@ -156,6 +164,7 @@ class VerticalWrappable(WrappableInterface):
         return hh
 
     def drawOn(self, canvas, x, y):
+        self._last = canvas, x, y
         cury = y
         for obj in self.wrappables:
             obj.drawOn(canvas, x, cury)
