@@ -75,18 +75,26 @@ class Wrappable(WrappableInterface):
         hh.add(wrappable)
         return hh
 
-    def drawOn(self, canvas, x, y):
-        self._last = canvas, x, y
-        # ci sommo height perché scrive all'insu'..
-        self.pb.drawOn(canvas, x+self.x_padding, y+self._pheight -self.y_padding)
-        if self.border_cb:
-            self.border_cb(canvas, x,y, self)
+    def drawOn(self, obj, x=None, y=None):
+        """ obj: canvas or wrappable
+            x: absolute x or delta-x from wrappable
+            y: absolute y or delta-y from wrappable
+        """
+        if isinstance(obj, WrappableInterface):
+            canvas, ox, oy = obj._last
+            if canvas is None:
+                raise Exception("Source object %s has not been drawed")
+            self.drawOn(canvas, ox + (x or 0), oy + (y or 0))
+        else:
+            canvas = obj
+            if x is None or y is None:
+                raise Exception("Coordinates x,y are mandatory")
+            self._last = canvas, x, y
+            # ci sommo height perché scrive all'insu'..
+            self.pb.drawOn(canvas, x+self.x_padding, y+self._pheight -self.y_padding)
+            if self.border_cb:
+                self.border_cb(canvas, x,y, self)
 
-    def drawAttached(self, ww, dx=0, dy=0):
-        canvas, x, y = ww._last
-        x += dx
-        y += dy
-        self.drawOn(canvas, x, y)
 
 class HorizzontalWrappable(WrappableInterface):
     wrappables = None
@@ -119,15 +127,29 @@ class HorizzontalWrappable(WrappableInterface):
         hh.add(wrappable)
         return hh
 
-    def drawOn(self, canvas, x, y):
-        self._last = canvas, x, y
-        curx = x
-        for obj in self.wrappables:
-            obj.drawOn(canvas, curx, y)
-            curx += obj.width
+    def drawOn(self, obj, x=None, y=None):
+        """ obj: canvas or wrappable
+            x: absolute x or delta-x from wrappable
+            y: absolute y or delta-y from wrappable
+        """
+        if isinstance(obj, WrappableInterface):
+            canvas, ox, oy = obj._last
+            if canvas is None:
+                raise Exception("Source object %s has not been drawed")
+            self.drawOn(canvas, ox + (x or 0), oy + (y or 0))
+        else:
+            canvas = obj
+            if x is None or y is None:
+                raise Exception("Coordinates x,y are mandatory")
+            self._last = canvas, x, y
 
-        if self.border_cb:
-            self.border_cb(canvas, x,y, self)
+            curx = x
+            for obj in self.wrappables:
+                obj.drawOn(canvas, curx, y)
+                curx += obj.width
+
+            if self.border_cb:
+                self.border_cb(canvas, x,y, self)
 
 
 class VerticalWrappable(WrappableInterface):
@@ -162,13 +184,27 @@ class VerticalWrappable(WrappableInterface):
         hh.add(self)
         hh.add(wrappable)
         return hh
+    
+    def drawOn(self, obj, x=None, y=None):
+        """ obj: canvas or wrappable
+            x: absolute x or delta-x from wrappable
+            y: absolute y or delta-y from wrappable
+        """
+        if isinstance(obj, WrappableInterface):
+            canvas, ox, oy = obj._last
+            if canvas is None:
+                raise Exception("Source object %s has not been drawed")
+            self.drawOn(canvas, ox + (x or 0), oy + (y or 0))
+        else:
+            canvas = obj
+            if x is None or y is None:
+                raise Exception("Coordinates x,y are mandatory")
+            self._last = canvas, x, y
 
-    def drawOn(self, canvas, x, y):
-        self._last = canvas, x, y
-        cury = y
-        for obj in self.wrappables:
-            obj.drawOn(canvas, x, cury)
-            cury += obj.height
-           
-        if self.border_cb:
-            self.border_cb(canvas, x,y, self)
+            cury = y
+            for obj in self.wrappables:
+                obj.drawOn(canvas, x, cury)
+                cury += obj.height
+            
+            if self.border_cb:
+                self.border_cb(canvas, x,y, self)
