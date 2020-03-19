@@ -15,13 +15,13 @@ class WrappableInterface(object):
         raise Exception('Not defined')
         #return self
 
-    def vAdd(self, wrappable):
-        raise Exception('Not defined')
-        #return self
+    # def vAdd(self, wrappable):
+    #     raise Exception('Not defined')
+    #     #return self
 
-    def hAdd(self, wrappable):
-        raise Exception('Not defined')
-        #return self
+    # def hAdd(self, wrappable):
+    #     raise Exception('Not defined')
+    #     #return self
 
     def add(self, wrappable):
         raise Exception('Not defined')
@@ -69,19 +69,19 @@ class Wrappable(WrappableInterface):
         if min_height and self.height<min_height:
             self.height = min_height
 
-    def vAdd(self, wrappable, *args, **kwargs):
-        assert isinstance(wrappable, WrappableInterface)
-        hh = VerticalWrappable(*args, **kwargs)
-        hh.add(self)
-        hh.add(wrappable)
-        return hh
+    # def vAdd(self, wrappable, *args, **kwargs):
+    #     assert isinstance(wrappable, WrappableInterface)
+    #     hh = VerticalWrappable(*args, **kwargs)
+    #     hh.add(self)
+    #     hh.add(wrappable)
+    #     return hh
 
-    def hAdd(self, wrappable, *args, **kwargs):
-        assert isinstance(wrappable, WrappableInterface)
-        hh = HorizzontalWrappable(*args, **kwargs)
-        hh.add(self)
-        hh.add(wrappable)
-        return hh
+    # def hAdd(self, wrappable, *args, **kwargs):
+    #     assert isinstance(wrappable, WrappableInterface)
+    #     hh = HorizzontalWrappable(*args, **kwargs)
+    #     hh.add(self)
+    #     hh.add(wrappable)
+    #     return hh
 
     def drawOn(self, obj, x=None, y=None):
         """ obj: canvas or wrappable
@@ -108,6 +108,7 @@ class Wrappable(WrappableInterface):
                 self.border_cb(canvas, x,y, self)
             
             self._call_wattachments()
+        return self
 
 
 class HorizzontalWrappable(WrappableInterface):
@@ -126,21 +127,21 @@ class HorizzontalWrappable(WrappableInterface):
     def __len__(self):
         return len(self.wrappables or [])
 
-    def hAdd(self, wrappable):
+    def add(self, wrappable):
         assert isinstance(wrappable, WrappableInterface)
         self.wrappables.append(wrappable)
 
         self.height = max(self.height, wrappable.height)
         self.width += wrappable.width
         return self
-    add = hAdd
+    # add = hAdd
 
-    def vAdd(self, wrappable, *args, **kwargs):
-        assert isinstance(wrappable, WrappableInterface)
-        hh = VerticalWrappable(*args, **kwargs)
-        hh.add(self)
-        hh.add(wrappable)
-        return hh
+    # def vAdd(self, wrappable, *args, **kwargs):
+    #     assert isinstance(wrappable, WrappableInterface)
+    #     hh = VerticalWrappable(*args, **kwargs)
+    #     hh.add(self)
+    #     hh.add(wrappable)
+    #     return hh
 
     def drawOn(self, obj, x=None, y=None):
         """ obj: canvas or wrappable
@@ -170,7 +171,7 @@ class HorizzontalWrappable(WrappableInterface):
                 self.border_cb(canvas, x,y, self)
 
             self._call_wattachments()
-
+        return self
 
 class VerticalWrappable(WrappableInterface):
     wrappables = None
@@ -188,7 +189,7 @@ class VerticalWrappable(WrappableInterface):
     def __len__(self):
         return len(self.wrappables or [])
         
-    def vAdd(self, wrappable, border=None):
+    def add(self, wrappable, border=None):
         assert isinstance(wrappable, WrappableInterface)
         self.wrappables.append(wrappable)
 
@@ -197,14 +198,14 @@ class VerticalWrappable(WrappableInterface):
         if border is not None:
             wrappable.border = border
         return self
-    add = vAdd
+    # add = vAdd
 
-    def hAdd(self, wrappable):
-        assert isinstance(wrappable, WrappableInterface)
-        hh = HorizzontalWrappable()
-        hh.add(self)
-        hh.add(wrappable)
-        return hh
+    # def hAdd(self, wrappable):
+    #     assert isinstance(wrappable, WrappableInterface)
+    #     hh = HorizzontalWrappable()
+    #     hh.add(self)
+    #     hh.add(wrappable)
+    #     return hh
     
     def drawOn(self, obj, x=None, y=None):
         """ obj: canvas or wrappable
@@ -234,3 +235,4 @@ class VerticalWrappable(WrappableInterface):
                 self.border_cb(canvas, x,y, self)
             
             self._call_wattachments()
+        return self
