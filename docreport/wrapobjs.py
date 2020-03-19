@@ -93,6 +93,7 @@ class Wrappable(WrappableInterface):
             x = (x or 0)
             y = (y or 0)
             if canvas is None:
+                # consider to update the "self" width and height (with a resize=True arg?)
                 obj._wattached.append( (self, x, y) )
             else:
                 self.drawOn(canvas, ox+x, oy+y  )
