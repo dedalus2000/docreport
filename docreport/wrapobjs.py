@@ -23,9 +23,15 @@ class WrappableInterface(object):
         raise Exception('Not defined')
         #return self
 
-    def add(self, wrappable):
-        raise Exception('Not defined')
-        #return self
+    def add(self, wrappable, x=0, y=0, resize=True):
+        assert isinstance(wrappable, WrappableInterface)
+        self._wattached.append( (wrappable, x, y) )
+        # now we are going to update the size of the self wrappable
+        if resize:
+            self.width = max(self.width, x + wrappable.width)
+            self.height = max(self.height, x + wrappable.height)
+        return self
+
     
     def _call_wattachments(self):
         if self._wattached:
@@ -127,20 +133,12 @@ class HorizzontalWrappable(WrappableInterface):
         return len(self.wrappables or [])
 
     def hAdd(self, wrappable):
-        assert isinstance(wrappable, WrappableInterface)
-        self.wrappables.append(wrappable)
-
-        self.height = max(self.height, wrappable.height)
-        self.width += wrappable.width
-        return self
-    add = hAdd
+        return self.add(wrappable, x=self.width)
 
     def vAdd(self, wrappable, *args, **kwargs):
-        assert isinstance(wrappable, WrappableInterface)
         hh = VerticalWrappable(*args, **kwargs)
         hh.add(self)
-        hh.add(wrappable)
-        return hh
+        return hh.add(wrappable)
 
     def drawOn(self, obj, x=None, y=None):
         """ obj: canvas or wrappable
@@ -189,22 +187,12 @@ class VerticalWrappable(WrappableInterface):
         return len(self.wrappables or [])
         
     def vAdd(self, wrappable, border=None):
-        assert isinstance(wrappable, WrappableInterface)
-        self.wrappables.append(wrappable)
-
-        self.height += wrappable.height
-        self.width = max(self.width, wrappable.width)
-        if border is not None:
-            wrappable.border = border
-        return self
-    add = vAdd
-
+        return self.add(wrappable, y=self.height)
+    
     def hAdd(self, wrappable):
-        assert isinstance(wrappable, WrappableInterface)
         hh = HorizzontalWrappable()
         hh.add(self)
-        hh.add(wrappable)
-        return hh
+        return hh.add(wrappable)
     
     def drawOn(self, obj, x=None, y=None):
         """ obj: canvas or wrappable

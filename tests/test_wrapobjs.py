@@ -44,35 +44,36 @@ def _test_page(c):
     w3 = print_txt('No <br/>escape <br/>    min 40', yy=70, ll=40, min_height=50)
     w3 = print_txt(' Escape\n    min 40', xx=140,yy=70, ll=40,
             min_height=50, escape=TmpFilter())
-
-    ###########
+    del w1
+    del w2
+    del w3
     h1 = HorizzontalWrappable()
-    h1.add(w1)
-    h1.add(w2)
-    h1.add(w3)
+    h1.hAdd(Wrappable("prova1", 80*mm))
+    h1.hAdd(Wrappable("prova2", 50*mm))
+    h1.hAdd(Wrappable("prova3", 40*mm))
     h1.drawOn(c, 30*mm, 120*mm)
 
-    def ww(nn):
-        nn += 1
-        pre = width = 0
-        for ii in range(nn):
-            obj = h1.wrappables[ii]
-            pre = width
-            width += obj.width
-        return pre, obj.width, obj.height
+    # def ww(nn):
+    #     nn += 1
+    #     pre = width = 0
+    #     for ii in range(nn):
+    #         obj = h1.wrappables[ii]
+    #         pre = width
+    #         width += obj.width
+    #     return pre, obj.width, obj.height
 
-    pre, w, h = ww(0)
-    _extern_lines(30*mm+pre,120*mm, w, h)
-    pre, w, h = ww(1)
-    _extern_lines(30*mm+pre,120*mm, w, h)
-    pre, w, h = ww(2)
-    _extern_lines(30*mm+pre,120*mm, w, h)
+    # pre, w, h = ww(0)
+    # _extern_lines(30*mm+pre,120*mm, w, h)
+    # pre, w, h = ww(1)
+    # _extern_lines(30*mm+pre,120*mm, w, h)
+    # pre, w, h = ww(2)
+    # _extern_lines(30*mm+pre,120*mm, w, h)
 
     c.showPage()  ######################################
     v1 = VerticalWrappable()
-    v1.add(w1)
-    v1.add(w2)
-    v1.add(w3)
+    v1.add(Wrappable("prova1", 80*mm))
+    v1.add(Wrappable("prova2", 50*mm))
+    v1.add(Wrappable("prova2", 40*mm))
     v1.add(h1)
     v1.drawOn(c, 30*mm, 30*mm)
 
