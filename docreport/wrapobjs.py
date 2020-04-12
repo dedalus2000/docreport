@@ -1,42 +1,38 @@
 # -*- coding: utf-8 -*-
 
 from .localreportlab import MyParagraph
-from .pagedata import styleN, mm
+from .pagedata import styleN
+
+# class Pdf(object):
+#     def __init__(self, canvas):
+#         self.canvas = canvas
+
+#     def draw(self):
+#         for ww in self.addWrappable:
+#             self.drawOn
+
+#     def drawOn(self, wrappable, x, y):
+#         wrappable.drawOn(self.canvas, x, y)
 
 
 class WrappableInterface(object):
     border = None
     height = None
     width = None
-    _last = (None, None, None)  # canvas,x,y
-    _wattached = None  # []
 
-    def drawOn(self, canvas, x, y):
+    def drawAt(self, x=None, y=None):
         raise Exception('Not defined')
         #return self
 
-    # def vAdd(self, wrappable):
+    # def add(self, wrappable):
     #     raise Exception('Not defined')
     #     #return self
-
-    # def hAdd(self, wrappable):
-    #     raise Exception('Not defined')
-    #     #return self
-
-    def add(self, wrappable):
-        raise Exception('Not defined')
-        #return self
-    
-    def _call_wattachments(self):
-        if self._wattached:
-            for (obj, dx,dy) in self._wattached:
-                obj.drawOn(self, dx, dy)
 
     def __str__(self):
         return "<{} {}x{} >".format(
                 getattr(self, 'name', self.__class__.__name__),
-                None if self.width is None else self.width/mm ,
-                None if self.height is None else  self.height/mm
+                self.width,
+                self.height
             )
     __repr__=__str__
 
@@ -44,8 +40,6 @@ class WrappableInterface(object):
 class Wrappable(WrappableInterface):
     """ un paragrafo con una larghezza predefinita e un altezza variabile in base al contenuto
     """
-    y_padding = 1*mm
-    x_padding = 1*mm
     style = styleN
 
     border_cb = None
@@ -53,186 +47,94 @@ class Wrappable(WrappableInterface):
     _pheight = None
     width = None
 
-    def __init__(self, txt, width, height=None, min_height=None, style=None, escape=None, border_cb=None):
-        self._wattached = []
+    def __init__(self, txt, width, ctx, height=None, min_height=None, fill=None, style=None, border_cb=None):
+        self.ctx = ctx
         self.width = width
-        
-        self.pb = MyParagraph(txt, style or self.style, escape=escape)
+
+        if fill is None:
+            self.pb = MyParagraph(txt, style or self.style, ctx=self.ctx)
 
         if height is None:
-            height = 9999*mm  # serve?
-        self.width, self.height = self.pb.wrap(max(width-2*self.x_padding, 1), height*300)  # verticalmente ignoriamo..
-        self.width += 2*self.x_padding  # la larghezza minima è 1+2*x_padding
-        self.height += 2*self.y_padding
+            height = 200000  # serve?
+        self.width, self.height = self.pb.wrap(max(width-2*self.ctx.x_padding, 1), height*300)  # verticalmente ignoriamo..
+        self.width += 2*self.ctx.x_padding  # la larghezza minima è 1+2*x_padding
+        self.height += 2*self.ctx.y_padding
         self._pheight = self.height
         self.border_cb = border_cb
         if min_height and self.height<min_height:
             self.height = min_height
 
-    # def vAdd(self, wrappable, *args, **kwargs):
-    #     assert isinstance(wrappable, WrappableInterface)
-    #     hh = VerticalWrappable(*args, **kwargs)
-    #     hh.add(self)
-    #     hh.add(wrappable)
-    #     return hh
-
-    # def hAdd(self, wrappable, *args, **kwargs):
-    #     assert isinstance(wrappable, WrappableInterface)
-    #     hh = HorizzontalWrappable(*args, **kwargs)
-    #     hh.add(self)
-    #     hh.add(wrappable)
-    #     return hh
-
-    def drawOn(self, obj, x=None, y=None):
-        """ obj: canvas or wrappable
-            x: absolute x or delta-x from wrappable
-            y: absolute y or delta-y from wrappable
-        """
-        if isinstance(obj, WrappableInterface):
-            canvas, ox, oy = obj._last
-            x = (x or 0)
-            y = (y or 0)
-            if canvas is None:
-                # consider to update the "self" width and height (with a resize=True arg?)
-                obj._wattached.append( (self, x, y) )
-            else:
-                self.drawOn(canvas, ox+x, oy+y  )
-        else:
-            canvas = obj
-            if x is None or y is None:
-                raise Exception("Coordinates x,y are mandatory")
-            self._last = canvas, x, y
-            # ci sommo height perché scrive all'insu'..
-            self.pb.drawOn(canvas, x+self.x_padding, y+self._pheight -self.y_padding)
-            if self.border_cb:
-                self.border_cb(canvas, x,y, self)
-            
-            self._call_wattachments()
+    def drawAt(self, x, y):
+        # ci sommo height perché scrive all'insu'..
+        self.pb.drawAt(x+self.ctx.x_padding, y+self._pheight -self.ctx.y_padding)
+        if self.border_cb:
+            self.border_cb(self.ctx.canvas, x,y, self)
         return self
 
 
-class HorizzontalWrappable(WrappableInterface):
-    wrappables = None
+class _Path(object):
+    def __init__(self, ww, x,y):
+        self.wrappable = ww
+        self.x = x
+        self.y = y
+
+    @property
+    def height(self):
+        return self.wrappable.height
+
+    @property
+    def width(self):
+        return self.wrappable.width
+
+    def drawAt(self, *args, **kwargs):
+        return self.wrappable.drawAt(*args, **kwargs)
+
+
+class Composition(WrappableInterface):
+    paths = None
     height = None
     width = None
     border_cb = None
-
-    def __init__(self, border_cb=None):
-        self._wattached = []
+    ctx = None
+    def __init__(self, ctx, border_cb=None):
+        self.ctx = ctx
         self.border_cb = border_cb
-        self.wrappables = []
+        self.paths = []
         self.height = 0
         self.width = 0
 
-    def __len__(self):
-        return len(self.wrappables or [])
-
-    def add(self, wrappable):
+    def hAdd(self, wrappable):
         assert isinstance(wrappable, WrappableInterface)
-        self.wrappables.append(wrappable)
-
-        self.height = max(self.height, wrappable.height)
+        self.paths.append(_Path(wrappable, self.width, 0))
         self.width += wrappable.width
-        return self
-    # add = hAdd
-
-    # def vAdd(self, wrappable, *args, **kwargs):
-    #     assert isinstance(wrappable, WrappableInterface)
-    #     hh = VerticalWrappable(*args, **kwargs)
-    #     hh.add(self)
-    #     hh.add(wrappable)
-    #     return hh
-
-    def drawOn(self, obj, x=None, y=None):
-        """ obj: canvas or wrappable
-            x: absolute x or delta-x from wrappable
-            y: absolute y or delta-y from wrappable
-        """
-        if isinstance(obj, WrappableInterface):
-            canvas, ox, oy = obj._last
-            x = (x or 0)
-            y = (y or 0)
-            if canvas is None:
-                obj._wattached.append( (self, x, y) )
-            else:
-                self.drawOn(canvas, ox+x, oy+y)
-        else:
-            canvas = obj
-            if x is None or y is None:
-                raise Exception("Coordinates x,y are mandatory")
-            self._last = canvas, x, y
-
-            curx = x
-            for obj in self.wrappables:
-                obj.drawOn(canvas, curx, y)
-                curx += obj.width
-
-            if self.border_cb:
-                self.border_cb(canvas, x,y, self)
-
-            self._call_wattachments()
+        self.height = max(self.height, wrappable.height)
         return self
 
-class VerticalWrappable(WrappableInterface):
-    wrappables = None
-    height = None
-    width = None
-    border_cb = None
-
-    def __init__(self, border_cb=None):
-        self._wattached = []
-        self.border_cb = border_cb
-        self.wrappables = []
-        self.height = 0
-        self.width = 0
-
-    def __len__(self):
-        return len(self.wrappables or [])
-        
-    def add(self, wrappable, border=None):
+    def vAdd(self, wrappable):
         assert isinstance(wrappable, WrappableInterface)
-        self.wrappables.append(wrappable)
-
+        self.paths.append(_Path(wrappable, 0, self.height))
         self.height += wrappable.height
         self.width = max(self.width, wrappable.width)
-        if border is not None:
-            wrappable.border = border
         return self
-    # add = vAdd
 
-    # def hAdd(self, wrappable):
-    #     assert isinstance(wrappable, WrappableInterface)
-    #     hh = HorizzontalWrappable()
-    #     hh.add(self)
-    #     hh.add(wrappable)
-    #     return hh
-    
-    def drawOn(self, obj, x=None, y=None):
-        """ obj: canvas or wrappable
-            x: absolute x or delta-x from wrappable
-            y: absolute y or delta-y from wrappable
-        """
-        if isinstance(obj, WrappableInterface):
-            canvas, ox, oy = obj._last
-            x = (x or 0)
-            y = (y or 0)
-            if canvas is None:
-                obj._wattached.append( (self, x, y) )
-            else:
-                self.drawOn(canvas, ox+x, oy+y)
-        else:
-            canvas = obj
-            if x is None or y is None:
-                raise Exception("Coordinates x,y are mandatory")
-            self._last = canvas, x, y
+    def add(self, wrappable, x, y, resize=True):
+        if x<0 or y<0:
+            print ("Warning: [{}, {}]".format(x,y))
+        assert isinstance(wrappable, WrappableInterface)
+        self.paths.append(_Path(wrappable, x,y))
+        if resize:
+            self.width = max(self.width, x+wrappable.width)
+            self.height = max(self.height, y+wrappable.height)
+        return self
 
-            cury = y
-            for obj in self.wrappables:
-                obj.drawOn(canvas, x, cury)
-                cury += obj.height
-            
-            if self.border_cb:
-                self.border_cb(canvas, x,y, self)
-            
-            self._call_wattachments()
+    def __len__(self):
+        return len(self.paths) if self.paths else 0
+
+    def drawAt(self, x, y):
+        for path in self.paths:
+            path.drawAt(x+path.x, y+path.y)
+
+        if self.border_cb:
+            self.border_cb(self.ctx.canvas, x,y, self)
+
         return self

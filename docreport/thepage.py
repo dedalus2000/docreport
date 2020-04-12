@@ -1,62 +1,65 @@
 # -*- coding: utf-8 -*-
 
-from .wrapobjs import WrappableInterface, HorizzontalWrappable, Wrappable, VerticalWrappable
+from .wrapobjs import WrappableInterface, Composition, Wrappable  # HorizzontalWrappable, Wrappable, VerticalWrappable
 from .localreportlab import MyCanvas
 from .pagedata import mm
+from .filters import Filter
 
 
-class RowsUtil(VerticalWrappable):
-    # a VertivalWrap. filled with Horiz.Wrap.
+
+class RowsUtil(Composition):
+    # a VerticalWrap. filled with Horiz.Wrap.
     #
-    max_height = 0
-    cols_widths = None
-    escape = None
 
-    def __init__(self, cols_widths, max_height=None, escape=None, *args, **kwargs):
-        self.max_height = max_height
-        self.cols_widths = cols_widths
-        self.escape = escape
-        super(RowsUtil, self).__init__(*args, **kwargs)
+    def __init__(self, ctx, *args, **kwargs):
+        self.ctx = ctx
+        super(RowsUtil, self).__init__(ctx=self.ctx,*args, **kwargs)
 
     def vAdd(self, row):
         assert isinstance(row, WrappableInterface)
-        if self.max_height and row.height>self.max_height:
-            print ("Warning: che faccio? riga maggiore dello spazio pagina %s>%s"%(row.height/mm, self.max_height/mm))
+        if self.ctx.rows_frame_height and row.height>self.ctx.rows_frame_height:
+            print ("Warning: che faccio? riga maggiore dello spazio pagina %s>%s"%(row.height, self.ctx.rows_frame_height))
+        # if not self.paths:
+        #     row.idx = 0
+        # else:
+        #     row.idx = self.paths[-1].idx
         super(RowsUtil, self).vAdd(row)
 
-    def _cloneEmpty(self):
-        rr = RowsUtil(self.cols_widths, max_height=self.max_height)
-        rr.width = self.width  # inutile
-        return rr
+    def add(self, row):
+        raise Exception('Dont use me')
 
-    def addRowValues(self, fields, cols_widths=None, escape=None):
-        cols_widths = cols_widths or self.cols_widths
-        
+    def hAdd(self, row):
+        raise Exception('Dont use me')
+
+    def _cloneEmpty(self):
+        return RowsUtil(ctx=self.ctx, border_cb=self.border_cb)
+
+    def addRowValues(self, fields, cols_widths=None):
+        cols_widths = cols_widths or self.ctx.cols_widths
+
         assert isinstance(cols_widths, (tuple,list))
         assert isinstance(fields, (tuple,list))
         assert len(cols_widths)==len(fields)
 
-        hh = HorizzontalWrappable()
+        hh = Composition(self.ctx)
         for field, width in zip(fields, cols_widths):
-            ww = Wrappable(field, width, escape=escape or self.escape)
-            hh.add(ww)
-        self.add(hh)
-            
+            ww = Wrappable(field, width, ctx=self.ctx)
+            hh.hAdd(ww)
+        self.vAdd(hh)
+
     def splitByHeight(self, requested_height):
         assert requested_height>0
-        if not self.wrappables:
-            return None, None
-        
+
         rr_before = self._cloneEmpty()
         rr_after = self._cloneEmpty()
 
         hsum = 0
-        for row in self.wrappables:
-            hsum += row.height
+        for path in self.paths:
+            hsum += path.height
             if hsum<=requested_height:
-                rr_before.add(row)
+                rr_before.vAdd(path.wrappable)
             else:
-                rr_after.add(row)
+                rr_after.vAdd(path.wrappable)
         return rr_before, rr_after
 
         # def drawOn(self, canvas, x, y):
@@ -75,25 +78,35 @@ class MyPage(object):
     rows_end_x = None
     rows_start_y = 50*mm
     rows_end_y = 210*mm
+    page_height = None
+    page_width = None
 
     _is_first_row = True
     curpage = None
     rows_obj = None
     escape = None  # escape filter instance
 
-    def __init__(self, filename_or_canvas, cols_widths=None, escape=None, *args, **kwargs):
+    @property
+    def rows_frame_height(self):
+        return self.rows_end_y - self.rows_start_y
+
+    def __init__(self, filename_or_canvas, cols_widths=None, escape=None, rows=None, *args, **kwargs):
         try:
             filename_or_canvas + ''
-            self.canvas = MyCanvas(filename_or_canvas, *args, **kwargs)
+            self.canvas = MyCanvas(filename_or_canvas, ctx=self, *args, **kwargs)
         except:
             self.canvas = filename_or_canvas
-        self.escape = escape
+
+        self.escape = escape or self.escape or Filter()
         self.curpage = 0
         self.cur_y = self.rows_start_y
         self._is_first_row = True
 
         self.cols_widths = cols_widths
-        self.rows_obj = RowsUtil(cols_widths, max_height=self.rows_end_y-self.rows_start_y, escape=escape)
+        if rows is None:
+            rows = {}
+
+        self.rows_obj = RowsUtil(ctx=self, **rows)
 
         self.canvas.setLineWidth(0.2)
 
@@ -110,7 +123,7 @@ class MyPage(object):
     def on_init_page(self, rows):
         # può attingere a self.curpage e self.data
         #print ("Pagina %s : rimangono %s"%(self.curpage, rows.height ))
-        
+
         self._line_hor(self.rows_start_y)
         self._line_hor(self.rows_end_y)
 
@@ -126,23 +139,34 @@ class MyPage(object):
     def generate(self, rows_obj=None):
         rows_height = self.rows_end_y - self.rows_start_y
 
-        if not rows_obj:
-            self.on_init_page(self.rows_obj)
+        if rows_obj is None:
             rows_obj = self.rows_obj
+            self.on_init_page(rows_obj)
 
-        if rows_height<rows_obj.height:
-            # ci sono più righe di quelle visualizzabili
-            before, after = rows_obj.splitByHeight(rows_height)
-            before.drawOn(self.canvas, self.rows_start_x, self.rows_start_y)
+        assert isinstance(rows_obj, RowsUtil)
 
+        before, after = rows_obj.splitByHeight(rows_height)
+        before.drawAt(self.rows_start_x, self.rows_start_y)
+
+        if after:
             self.new_page()
             self.on_init_page(after)
             self.generate(after)
-        else:
-            rows_obj.drawOn(self.canvas, self.rows_start_x, self.rows_start_y)
+        # else:
+        #     self.rows_obj.drawAt(self.rows_start_x, self.rows_start_y, paths=rows_obj)
 
-    def addRowValues(self, fields, cols_widths=None, escape=None):
-        self.rows_obj.addRowValues(fields, cols_widths, escape=escape)
-    
+    def addRowValues(self, fields, cols_widths=None):
+        self.rows_obj.addRowValues(fields, cols_widths)
+
     def addRowWrappable(self, wrappable):
         self.rows_obj.add(wrappable)
+
+    ###
+
+    def Wrappable(self, *args, **kwargs):
+        kwargs['ctx'] = self
+        return Wrappable(*args, **kwargs)
+
+    def Composition(self, *args, **kwargs):
+        kwargs['ctx'] = self
+        return Composition(*args, **kwargs)

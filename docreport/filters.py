@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 from babel.dates import format_date, format_time
-from babel.numbers import format_decimal
+#from babel.numbers import format_decimal
 from markupsafe import escape as markup_escape
 import datetime
 import decimal
@@ -68,7 +68,7 @@ class Tag(object):
 
         if self.name=='N':
             escape = None
-        elif self.name in unary:  
+        elif self.name in unary:
             tt.append('<{}{}/>'.format(self.name, attrs))
         elif self.name:
             tt.append("<{}{}>".format(self.name, attrs))
@@ -100,7 +100,7 @@ class Filter(object):
 
     def __call__(self, txt):
         return self.default_filter(txt)
-            
+
     def date(self, obj):
         return format_date(obj, format='long', locale=self.locale)
 
@@ -159,4 +159,3 @@ class Filter(object):
                 return self.text(txt)
         print ("Warning %s not managed"%type(txt))
         return str(txt)
-
