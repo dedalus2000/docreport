@@ -30,6 +30,7 @@ class MyParagraph(Paragraph):
     ctx = None
     def __init__(self, text, style, ctx, escape=None, **kwargs):
         self.ctx = ctx
+
         if not escape:
             escape = self.ctx.escape #Filter()
 

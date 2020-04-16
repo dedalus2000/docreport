@@ -73,10 +73,11 @@ class Wrappable(WrappableInterface):
 
 
 class _Path(object):
-    def __init__(self, ww, x,y):
+    def __init__(self, ww, x,y, idx=None):
         self.wrappable = ww
         self.x = x
         self.y = y
+        self.idx = idx
 
     @property
     def height(self):
@@ -105,14 +106,21 @@ class Composition(WrappableInterface):
 
     def hAdd(self, wrappable):
         assert isinstance(wrappable, WrappableInterface)
-        self.paths.append(_Path(wrappable, self.width, 0))
+        path = _Path(wrappable, self.width, 0)
+        self._beforeAddingPath(path)
+        self.paths.append(path)
         self.width += wrappable.width
         self.height = max(self.height, wrappable.height)
         return self
 
+    def _beforeAddingPath(self, path):
+        pass
+
     def vAdd(self, wrappable):
         assert isinstance(wrappable, WrappableInterface)
-        self.paths.append(_Path(wrappable, 0, self.height))
+        path = _Path(wrappable, 0, self.height)
+        self._beforeAddingPath(path)
+        self.paths.append(path)
         self.height += wrappable.height
         self.width = max(self.width, wrappable.width)
         return self
@@ -121,7 +129,9 @@ class Composition(WrappableInterface):
         if x<0 or y<0:
             print ("Warning: [{}, {}]".format(x,y))
         assert isinstance(wrappable, WrappableInterface)
-        self.paths.append(_Path(wrappable, x,y))
+        path = _Path(wrappable, x,y)
+        self._beforeAddingPath(path)
+        self.paths.append(path)
         if resize:
             self.width = max(self.width, x+wrappable.width)
             self.height = max(self.height, y+wrappable.height)

@@ -12,18 +12,23 @@ class RowsUtil(Composition):
     #
 
     def __init__(self, ctx, *args, **kwargs):
+        # in kwargs c'è -opzionale- border_cb
         self.ctx = ctx
         super(RowsUtil, self).__init__(ctx=self.ctx,*args, **kwargs)
+
+    def _beforeAddingPath(self, path):
+        if self.paths:
+            path.idx = self.paths[-1].idx + 1
+            path.height_sum = self.paths[-1].height_sum + path.height
+        else:
+            path.idx = 0
+            path.height_sum = path.height
 
     def vAdd(self, row):
         assert isinstance(row, WrappableInterface)
         if self.ctx.rows_frame_height and row.height>self.ctx.rows_frame_height:
             print ("Warning: che faccio? riga maggiore dello spazio pagina %s>%s"%(row.height, self.ctx.rows_frame_height))
-        # if not self.paths:
-        #     row.idx = 0
-        # else:
-        #     row.idx = self.paths[-1].idx
-        super(RowsUtil, self).vAdd(row)
+        return super(RowsUtil, self).vAdd(row)
 
     def add(self, row):
         raise Exception('Dont use me')
@@ -34,18 +39,18 @@ class RowsUtil(Composition):
     def _cloneEmpty(self):
         return RowsUtil(ctx=self.ctx, border_cb=self.border_cb)
 
-    def addRowValues(self, fields, cols_widths=None):
+    def addRowValues(self, fields, cols_widths=None, border_cb=None):
         cols_widths = cols_widths or self.ctx.cols_widths
 
         assert isinstance(cols_widths, (tuple,list))
         assert isinstance(fields, (tuple,list))
         assert len(cols_widths)==len(fields)
 
-        hh = Composition(self.ctx)
+        hh = Composition(self.ctx, border_cb=border_cb)
         for field, width in zip(fields, cols_widths):
             ww = Wrappable(field, width, ctx=self.ctx)
             hh.hAdd(ww)
-        self.vAdd(hh)
+        return self.vAdd(hh)
 
     def splitByHeight(self, requested_height):
         assert requested_height>0
@@ -53,10 +58,8 @@ class RowsUtil(Composition):
         rr_before = self._cloneEmpty()
         rr_after = self._cloneEmpty()
 
-        hsum = 0
         for path in self.paths:
-            hsum += path.height
-            if hsum<=requested_height:
+            if path.height_sum<=requested_height:
                 rr_before.vAdd(path.wrappable)
             else:
                 rr_after.vAdd(path.wrappable)
@@ -78,6 +81,7 @@ class MyPage(object):
     rows_end_x = None
     rows_start_y = 50*mm
     rows_end_y = 210*mm
+
     page_height = None
     page_width = None
 
@@ -131,7 +135,7 @@ class MyPage(object):
         endx = self.rows_end_x
         if not endx:
             if not self.rows_obj:
-                raise Exception('eh')
+                raise Exception('Missing rows')
             endx = self.rows_obj.width
 
         self.canvas.line(self.rows_start_x, yy, endx, yy)
