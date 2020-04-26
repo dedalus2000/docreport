@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from docreport.wrapobjs import WrappableInterface, Wrappable as WW, Composition
+from docreport.wrapobjs import WrappableInterface, Text, Composition
 from docreport.borders import hborders, vborders, table_borders
 from docreport.thepage import MyPage, RowsUtil
 from docreport.pagedata import mm
@@ -12,7 +12,7 @@ import random
 def _test_page(c):
     def newPage(title):
         c.showPage()
-        WW(title, 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm)
+        Text(title, 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm)
 
     c.ctx.rows_frame_height = 200*mm
     c.ctx.cols_widths = [40*mm,20*mm,40*mm]
@@ -60,7 +60,7 @@ def _test_page(c):
         def on_init_page(self, rows):
             rect_width = self.page_width-20*mm
             self.canvas.rect(10*mm,10*mm,rect_width,20*mm)
-            self.Wrappable('Page %s'%self.curpage, 20*mm).drawAt(10*mm, 20*mm)
+            self.Text('Page %s'%self.curpage, 20*mm).drawAt(10*mm, 20*mm)
 
     mp = Page(c, cols_widths=[40*mm,20*mm,40*mm], rows=dict(border_cb=table_borders))
     for ii in range(16):

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from .wrapobjs import WrappableInterface, Composition, Wrappable  # HorizzontalWrappable, Wrappable, VerticalWrappable
+from .wrapobjs import WrappableInterface, Composition, Text
 from .localreportlab import MyCanvas
 from .pagedata import mm
 from .filters import Filter
-
 
 
 class RowsUtil(Composition):
@@ -48,7 +47,7 @@ class RowsUtil(Composition):
 
         hh = Composition(self.ctx, border_cb=border_cb)
         for field, width in zip(fields, cols_widths):
-            ww = Wrappable(field, width, ctx=self.ctx)
+            ww = Text(field, width, ctx=self.ctx)
             hh.hAdd(ww)
         return self.vAdd(hh)
 
@@ -74,8 +73,8 @@ class RowsUtil(Composition):
 
 
 class MyPage(object):
-    y_padding = 2*mm
-    x_padding = 2*mm
+    y_padding = 0*mm
+    x_padding = 0*mm
 
     rows_start_x = 10*mm
     rows_end_x = None
@@ -162,14 +161,14 @@ class MyPage(object):
     def addRowValues(self, fields, cols_widths=None):
         self.rows_obj.addRowValues(fields, cols_widths)
 
-    def addRowWrappable(self, wrappable):
-        self.rows_obj.add(wrappable)
+    def addRow(self, text):
+        self.rows_obj.add(text)
 
     ###
 
-    def Wrappable(self, *args, **kwargs):
+    def Text(self, *args, **kwargs):
         kwargs['ctx'] = self
-        return Wrappable(*args, **kwargs)
+        return Text(*args, **kwargs)
 
     def Composition(self, *args, **kwargs):
         kwargs['ctx'] = self

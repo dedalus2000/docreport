@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from docreport.wrapobjs import Wrappable as WW, Composition
+from docreport.wrapobjs import Text as WW, Composition
 from docreport.localreportlab import MyParagraph
 from docreport.pagedata import styleN, mm
 from docreport.filters import Filter
@@ -10,7 +10,6 @@ from docreport import borders
 from utils import pdfFileCanvas
 from docreport.borders import hborders, vborders
 
-
 def _test_page(c):
     class TmpFilter(Filter):
         def text(self, txt):
@@ -18,9 +17,16 @@ def _test_page(c):
             txt ="* "+txt
             return txt
 
+    def _page_number():
+        pp = 1
+        while 1:
+            yield pp
+            pp+=1
+    page_number = _page_number()
+    page_number.__next__()
     def newPage(title):
         c.showPage()
-        WW(title, 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm)
+        WW("Page {}: {}".format(page_number.__next__(),title), 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm)
 
     def l(c, x1,y1, obj):
         thikness = 3
@@ -40,12 +46,12 @@ def _test_page(c):
         c.line( x2,y2, x2, y2+thikness)
 
     #################### PAGE 1
-    WW("Page 1", 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm )
+    WW("", 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm )
 
     xx=10; min_height=None;
 
     yy=20; ll=50;
-    WW("[{}:{},{}] Wrappable Test 1".format(xx,yy,ll), ll*mm, ctx=c.ctx,
+    WW("[{}:{},{}] Text Test 1".format(xx,yy,ll), ll*mm, ctx=c.ctx,
             min_height=min_height, border_cb=l).drawAt(xx*mm, yy*mm)
 
     yy=30; ll=80
@@ -60,8 +66,19 @@ def _test_page(c):
     WW("[{}:{},{}] No <br/>escape <br/>    min 40".format(xx,yy,ll), ll*mm, ctx=c.ctx,
             min_height=min_height, border_cb=l).drawAt(xx*mm, yy*mm)
 
-    xx=140
-    yy=70; ll=40; min_height=50;
+    xx=150
+    yy=70; ll=60; min_height=50;
+    padding = 5*mm
+    w=WW("[{}:{},{}] Padding".format(xx,yy,ll), ll*mm, ctx=c.ctx,
+            min_height=min_height, border_cb=l,
+            x_padding=padding, y_padding=padding).drawAt(xx*mm, yy*mm)
+
+    c.line(xx*mm-10,yy*mm, xx*mm,yy*mm)
+    c.line(xx*mm-10,yy*mm+padding, xx*mm,yy*mm+padding)
+    c.line(xx*mm-10,yy*mm+padding+w._pb_height, xx*mm,yy*mm+padding+w._pb_height)
+    c.line(xx*mm-10,yy*mm+padding*2+w._pb_height, xx*mm,yy*mm+padding*2+w._pb_height)
+
+
     # tmpcontext = default_context.copy()
     # tmpcontext['filter_cls'] = TmpFilter
     # WW("[{}:{},{}] Escape\n    min 40".format(xx,yy,ll), ll*mm,
@@ -92,7 +109,7 @@ def _test_page(c):
         .vAdd(h2)
     v1.drawAt(30*mm, 200*mm)
 
-    newPage("Page 2:Test Markup System") ###################################
+    newPage("Test Markup System") ###################################
 
     ww = WW('Test1', 30*mm, ctx=c.ctx)
     ww1 = Composition(c.ctx)\
@@ -103,7 +120,7 @@ def _test_page(c):
 
     ww1.drawAt(20*mm, 30*mm + ww.height*mm)
 
-    newPage("Page 3:Borders") ###################################
+    newPage("Borders") ###################################
 
     Composition(c.ctx,border_cb=hborders)\
         .hAdd(WW("Col1", 15*mm, ctx=c.ctx))\
@@ -117,7 +134,7 @@ def _test_page(c):
         .vAdd(WW("row3", 15*mm, ctx=c.ctx))\
         .drawAt(20*mm, 60*mm)
 
-    newPage("Page 4:Relative position")  ############################
+    newPage("Relative position")  ############################
     #c.showPage()  ######################################
     # WW("Relative position (to the last draw point)", 200*mm).drawAt(20*mm, 20*mm )
 
@@ -140,7 +157,7 @@ def _test_page(c):
     # w3.drawOn(w2, y=w2.height)
     # w1.drawAt(30*mm, 70*mm)
 
-    newPage("Page 5: Composition")  ############################
+    newPage("Composition")  ############################
     cc = Composition(c.ctx)\
         .hAdd(WW("H1", 15*mm, ctx=c.ctx))\
         .hAdd(WW("H2", 20*mm, ctx=c.ctx))\
@@ -153,7 +170,24 @@ def _test_page(c):
         .vAdd(WW("R3", 15*mm, ctx=c.ctx))
     cc2.drawAt(20*mm, 60*mm)
 
-    newPage("Page 6:Composition")  ############################
+    newPage("Composition")  ############################
+    # 'error','overflow','shrink','truncate'
+    WW('One row', width=30*mm, height=30*mm,
+        mode='overflow',ctx=c.ctx, border_cb=borders.borderbox).drawAt(10*mm, 30*mm)
+    WW('One row', width=30*mm, min_height=30*mm,
+        mode='overflow',ctx=c.ctx, border_cb=borders.borderbox).drawAt(10*mm, 70*mm)
+    w=WW('One row '*40 , width=30*mm,  height=30*mm,
+        mode='overflow',ctx=c.ctx, border_cb=borders.borderbox).drawAt(10*mm, 110*mm)
+
+    WW('One row '*40 , width=30*mm, height=30*mm,
+        mode='shrink',ctx=c.ctx, border_cb=borders.borderbox).drawAt(50*mm, 30*mm)
+
+    WW('One row '*40 , width=30*mm, height=30*mm,
+        mode='truncate',ctx=c.ctx, border_cb=borders.borderbox).drawAt(90*mm, 30*mm)
+
+    # w.name='aa'
+    # print (w,22222222222222222)
+
     # root.layout().row().cell() => ww
     # root.layout().row().cell() => ww
 

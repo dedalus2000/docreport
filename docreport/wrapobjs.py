@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .localreportlab import MyParagraph
+from .localreportlab import MyParagraph, MyKeepInFrame
 from .pagedata import styleN
 
 # class Pdf(object):
@@ -37,7 +37,7 @@ class WrappableInterface(object):
     __repr__=__str__
 
 
-class Wrappable(WrappableInterface):
+class Text(WrappableInterface):
     """ un paragrafo con una larghezza predefinita e un altezza variabile in base al contenuto
     """
     style = styleN
@@ -47,18 +47,34 @@ class Wrappable(WrappableInterface):
     _pheight = None
     width = None
 
-    def __init__(self, txt, width, ctx, height=None, min_height=None, fill=None, style=None, border_cb=None):
+    def __init__(self, txt, width, ctx, height=None,
+                min_height=None, mode=None, style=None, border_cb=None,
+                x_padding=None, y_padding=None):
         self.ctx = ctx
+        self.x_padding = x_padding if x_padding is not None else self.ctx.x_padding
+        self.y_padding = y_padding if y_padding is not None else self.ctx.y_padding
         self.width = width
 
-        if fill is None:
+        if mode is None or mode=='overflow':
             self.pb = MyParagraph(txt, style or self.style, ctx=self.ctx)
+        else:
+            # mode in ('error','overflow','shrink','truncate')
+            if height is None:
+                height = min_height
+                if height is None:
+                    raise Exception('Height is mandatory with "mode" set')
+            pp = MyParagraph(txt, style or self.style, ctx=self.ctx)
+            if not isinstance(pp, (tuple, list)):
+                pp = [pp]
+            self.pb = MyKeepInFrame(mode=mode, maxWidth=width, maxHeight=height, content=pp, ctx=ctx)
 
         if height is None:
             height = 200000  # serve?
-        self.width, self.height = self.pb.wrap(max(width-2*self.ctx.x_padding, 1), height*300)  # verticalmente ignoriamo..
-        self.width += 2*self.ctx.x_padding  # la larghezza minima è 1+2*x_padding
-        self.height += 2*self.ctx.y_padding
+
+        self.width, self.height = self.pb.wrap(max(width-2*self.x_padding, 1), height*300)  # verticalmente ignoriamo..
+        self._pb_width, self._pb_height = self.width, self.height
+        self.width += 2*self.x_padding  # la larghezza minima è 1+2*x_padding
+        self.height += 2*self.y_padding
         self._pheight = self.height
         self.border_cb = border_cb
         if min_height and self.height<min_height:
@@ -66,7 +82,7 @@ class Wrappable(WrappableInterface):
 
     def drawAt(self, x, y):
         # ci sommo height perché scrive all'insu'..
-        self.pb.drawAt(x+self.ctx.x_padding, y+self._pheight -self.ctx.y_padding)
+        self.pb.drawAt(x+self.x_padding, y+self._pheight -self.y_padding)
         if self.border_cb:
             self.border_cb(self.ctx.canvas, x,y, self)
         return self
