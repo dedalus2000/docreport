@@ -43,17 +43,22 @@ class Tag(object):
     attributes = None
 
     def __call__(self, **attributes):
-        self.attributes = attributes
-        self.children = []
-        return self
+        tag = Tag()
+        tag.name = self.name
+        tag.attributes = attributes
+        tag.children = []
+        return tag
 
     def __getitem__(self, children):
-        if self.name in unary:
-            raise Exception("Tag '{}' cannot have children".format(self.name))
+        tag = Tag()
+        tag.name = self.name
+        tag.attributes = self.attributes
+        if tag.name in unary:
+            raise Exception("Tag '{}' cannot have children".format(tag.name))
         if not isinstance(children, (tuple, list)):
             children = [children]
-        self.children = children
-        return self
+        tag.children = children
+        return tag
 
     def __getattr__(self, name):
         t = Tag()
@@ -76,6 +81,8 @@ class Tag(object):
         for child in self.children or []:
             if isinstance(child, Tag):
                 tt.append(child.toXml(escape=escape))
+            elif child is None:
+                tt.append('')
             elif escape:
                 tt.append(escape(child))
             else:
@@ -87,22 +94,23 @@ class Tag(object):
             tt.append("</{}>".format(self.name))
         return ''.join(tt)
 
-    def __str__(self):
-        return self.toXml()
-    __repr__ = __str__
+    # def __str__(self):
+    #     return self.toXml(Filter())
+    # __repr__ = __str__
+    # __html__ = __str__
 
 T = Tag()
 
 
 class Filter(object):
-    def __init__(self, locale='en_DK'):
+    def __init__(self, locale='en_DK', date_format='long'):
         self.locale = locale
-
+        self.date_format = date_format
     def __call__(self, txt):
         return self.default_filter(txt)
 
     def date(self, obj):
-        return format_date(obj, format='long', locale=self.locale)
+        return format_date(obj, format=self.date_format, locale=self.locale)
 
     def datetime(self, obj):
         # if obj.tzinfo:

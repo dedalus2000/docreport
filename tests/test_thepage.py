@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from docreport.wrapobjs import WrappableInterface, Text, Composition
-from docreport.borders import hborders, vborders, table_borders
+from docreport.borders import hborders, vborders, table_borders,borderbox
 from docreport.thepage import MyPage, RowsUtil
 from docreport.pagedata import mm
 from utils import pdfFileCanvas
@@ -21,6 +21,8 @@ def _test_page(c):
     rr.addRowValues(['col1', 'col2', 'col3'])
     rr.addRowValues(['col4 è molto grossa ma molto molto', 'col5', 'col6'])
     rr.addRowValues(['col7', 'col8', 'col9'])
+    rr.addRowValues(['col7', 'col8', 'col9'], cols_widths=False,border_cb=borderbox   )
+    rr.addRowValues(['col7', 'col8', 'col9'], cols_widths=[20*mm,None,None],border_cb=borderbox   )
     rr.drawAt(10*mm, 30*mm)
 
     a,b = rr.splitByHeight(rr.paths[0].height+1)
@@ -56,6 +58,8 @@ def _test_page(c):
     class Page(MyPage):
         page_width = A4[0]
         page_height = A4[1]
+        rows_end_x = A4[0]-10*mm
+        rows_start_x = 10*mm
 
         def on_init_page(self, rows):
             rect_width = self.page_width-20*mm

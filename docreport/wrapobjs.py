@@ -103,6 +103,10 @@ class _Path(object):
     def width(self):
         return self.wrappable.width
 
+    @property
+    def paths(self):
+        return self.paths
+
     def drawAt(self, *args, **kwargs):
         return self.wrappable.drawAt(*args, **kwargs)
 

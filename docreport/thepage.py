@@ -39,6 +39,8 @@ class RowsUtil(Composition):
         return RowsUtil(ctx=self.ctx, border_cb=self.border_cb)
 
     def addRowValues(self, fields, cols_widths=None, border_cb=None):
+        if cols_widths is False:
+            cols_widths = [None]*len(fields)
         cols_widths = cols_widths or self.ctx.cols_widths
 
         assert isinstance(cols_widths, (tuple,list))
@@ -46,8 +48,20 @@ class RowsUtil(Composition):
         assert len(cols_widths)==len(fields)
 
         hh = Composition(self.ctx, border_cb=border_cb)
+
+        # calcola il width rimasto in "single"
+        #  quando width richiesto è None
+        nnone = 0
+        xdim = self.width
+        for dd in cols_widths:
+            if dd is None:
+                nnone += 1
+            else:
+                xdim -= dd
+        single = xdim / nnone if nnone else 0
+
         for field, width in zip(fields, cols_widths):
-            ww = Text(field, width, ctx=self.ctx)
+            ww = Text(field, width if width is not None else single, ctx=self.ctx)
             hh.hAdd(ww)
         return self.vAdd(hh)
 
@@ -89,6 +103,8 @@ class MyPage(object):
     rows_obj = None
     escape = None  # escape filter instance
 
+    cols_widths = None
+
     @property
     def rows_frame_height(self):
         return self.rows_end_y - self.rows_start_y
@@ -105,7 +121,8 @@ class MyPage(object):
         self.cur_y = self.rows_start_y
         self._is_first_row = True
 
-        self.cols_widths = cols_widths
+        if cols_widths:
+            self.cols_widths = cols_widths
         if rows is None:
             rows = {}
 
@@ -165,7 +182,6 @@ class MyPage(object):
         self.rows_obj.add(text)
 
     ###
-
     def Text(self, *args, **kwargs):
         kwargs['ctx'] = self
         return Text(*args, **kwargs)

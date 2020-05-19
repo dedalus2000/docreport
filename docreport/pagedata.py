@@ -8,6 +8,7 @@ from .filters import Filter
 #page_xlen, page_ylen = A4
 
 styles = getSampleStyleSheet()
+# Title, OrderedList Normal Italic Heading6.. Heading1  Definition  Code Bullet  BodyText
 styleN = styles['Normal']
 styleH = styles['Heading1']
 
