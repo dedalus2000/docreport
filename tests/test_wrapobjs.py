@@ -17,16 +17,19 @@ def _test_page(c):
             txt ="* "+txt
             return txt
 
-    def _page_number():
-        pp = 1
-        while 1:
-            yield pp
-            pp+=1
-    page_number = _page_number()
-    page_number.__next__()
+    class _Page_number():
+        def __init__(self):
+            self.pp = 0
+
+        def next(self):
+            self.pp += 1
+            return self.pp
+
+    page_number = _Page_number()
+
     def newPage(title):
         c.showPage()
-        WW("Page {}: {}".format(page_number.__next__(),title), 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm)
+        WW("Page {}: {}".format(page_number.next(),title), 200*mm, ctx=c.ctx).drawAt(20*mm, 10*mm)
 
     def l(c, x1,y1, obj):
         thikness = 3
